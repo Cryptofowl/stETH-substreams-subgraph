@@ -61,7 +61,7 @@ cargo build --target wasm32-unknown-unknown --release
 substreams run -e mainnet.eth.streamingfast.io:443 \
 substreams.yaml \
 graph_out \
---start-block 11446769
+--start-block 11473216
 ```
 
 ## Contributing

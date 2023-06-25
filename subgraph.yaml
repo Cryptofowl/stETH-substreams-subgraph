@@ -1,10 +1,10 @@
 specVersion: 0.0.4
-description: GRT Subgraph (powered by StreamingFast Substreams)
+description: stETH Subgraph (powered by StreamingFast Substreams)
 schema:
   file: ./schema.graphql
 dataSources:
   - kind: substreams
-    name: grt_substreams_subgraph
+    name: steth_substreams_subgraph
     network: mainnet
     source:
       package:

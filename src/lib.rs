@@ -10,8 +10,8 @@ use substreams_ethereum::{pb::eth::v2 as eth, NULL_ADDRESS};
 use substreams_entity_change::pb::entity::{entity_change::Operation, EntityChanges};
 use substreams::store::{DeltaBigInt, Deltas};
 
-// GRT token contract address
-const GRT_TOKEN_CONTRACT: [u8; 20] = hex!("c944E90C64B2c07662A292be6244BDf05Cda44a7");
+// stETH token contract address
+const stETH_TOKEN_CONTRACT: [u8; 20] = hex!("ae7ab96520DE3A18E5e111B5EaAb095312D7fE84");
 
 substreams_ethereum::init!();
 
@@ -24,8 +24,8 @@ fn map_transfers(blk: eth::Block) -> Result<erc20::Transfers, substreams::errors
     let mut transfers_vec = vec![];
 
     for log in blk.logs() {
-        // Filter logs from GRT token contract only
-        if !(&Hex(&GRT_TOKEN_CONTRACT).to_string() == &Hex(&log.address()).to_string()) {
+        // Filter logs from stETH token contract only
+        if !(&Hex(&stETH_TOKEN_CONTRACT).to_string() == &Hex(&log.address()).to_string()) {
             continue;
         }
 
@@ -62,12 +62,12 @@ fn store_balances(transfers: erc20::Transfers, s: StoreAddBigInt) {
 }
 #[substreams::handlers::map]
 fn map_accounts(
-    grt_deltas: Deltas<DeltaBigInt>,
+    stETH_deltas: Deltas<DeltaBigInt>,
 ) -> Result<erc20::Accounts, substreams::errors::Error> {
     let mut accounts = erc20::Accounts::default();
     let mut accounts_vec = vec![];
 
-    for delta in grt_deltas.deltas {
+    for delta in stETH_deltas.deltas {
         if delta.key == Hex(&NULL_ADDRESS).to_string() {
             continue;
         }
@@ -100,13 +100,13 @@ fn store_total_supply(transfers: erc20::Transfers, s: StoreAddBigInt) {
 
 #[substreams::handlers::map]
 fn map_block_total_supply_change(
-    grt_total_supply: StoreGetBigInt,
+    stETH_total_supply: StoreGetBigInt,
 ) -> Result<erc20::BlockTotalSupplyChange, substreams::errors::Error>  {
-    let beginning_of_block_total_supply = match grt_total_supply.get_first("totalSupply"){
+    let beginning_of_block_total_supply = match stETH_total_supply.get_first("totalSupply"){
         Some(b) => b,
         _ => BigInt::zero(),
     };
-    let end_of_block_total_supply = match grt_total_supply.get_last("totalSupply"){
+    let end_of_block_total_supply = match stETH_total_supply.get_last("totalSupply"){
         Some(b) => b,
         _ => BigInt::zero(),
     };
@@ -123,8 +123,8 @@ fn map_block_total_supply_change(
 #[substreams::handlers::map]
 pub fn graph_out(
     transfers: erc20::Transfers,
-    grt_balance_deltas: Deltas<DeltaBigInt>,
-    grt_total_supply_deltas: Deltas<DeltaBigInt>,
+    stETH_balance_deltas: Deltas<DeltaBigInt>,
+    stETH_total_supply_deltas: Deltas<DeltaBigInt>,
 ) -> Result<EntityChanges, substreams::errors::Error> {
     let mut entity_changes: EntityChanges = Default::default();
     
@@ -141,7 +141,7 @@ pub fn graph_out(
             .change("value", BigInt::from_str(&transfer.value).unwrap());
     }
 
-    for delta in grt_balance_deltas.deltas {
+    for delta in stETH_balance_deltas.deltas {
         entity_changes
             .push_change(
                 "Account",
@@ -152,10 +152,10 @@ pub fn graph_out(
             .change("balance", delta);
     }
 
-    for delta in grt_total_supply_deltas.deltas {
+    for delta in stETH_total_supply_deltas.deltas {
         entity_changes
             .push_change(
-                "GRT",
+                "stETH",
                 "1",
                 delta.ordinal,
                 Operation::Update, // Update will create the entity if it does not exist

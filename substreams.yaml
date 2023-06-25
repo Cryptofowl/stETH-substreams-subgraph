@@ -1,6 +1,6 @@
 specVersion: v0.1.0
 package:
-  name: "grt_substreams"
+  name: "steth_substreams"
   version: v0.1.0
 
 protobuf:
